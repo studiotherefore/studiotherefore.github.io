@@ -124,6 +124,11 @@ footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 va
   border: 1px solid var(--rule); color: var(--ink-2); background: var(--sheet); }
 .viewer button:hover { border-color: var(--ink-3); color: var(--ink); }
 .viewer button:disabled { opacity: .35; cursor: default; }
+.viewer .v-play { padding: 5px 8px; line-height: 0; }
+.viewer .v-play svg { width: 15px; height: 15px; }
+.viewer .v-play svg rect:last-child { fill: var(--sheet); }
+.viewer .v-play.playing { color: var(--accent); border-color: var(--accent); }
+.viewer .v-play[hidden] { display: none; }
 
 /* Preview only (served by the board, never published): checks, the public About, leaving shots out. */
 .note { border: 1px dashed var(--rule-hi); border-radius: 4px; padding: 10px 12px; font: 12px/1.6 var(--mono); color: var(--ink-3); }
@@ -178,6 +183,7 @@ footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 va
   <div class="stage"><img id="v-img" alt=""></div>
   <div class="bar"><b id="v-name"></b><span id="v-at"></span><span class="left-out" id="v-out" hidden>left out</span><span class="sp"></span>
     <button type="button" id="v-hide" hidden></button>
+    <button type="button" id="v-play" class="v-play" aria-pressed="false" aria-label="Play the screenshots" title="Rest here to play the screenshots; click to keep playing"></button>
     <button type="button" id="v-prev" aria-label="Previous">←</button><button type="button" id="v-next" aria-label="Next">→</button>
     <button type="button" id="v-close">Close</button></div>
 </div>
@@ -606,7 +612,7 @@ document.addEventListener("touchend", e => {
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
     swiped = true; setTimeout(() => { swiped = false; }, 400);
     const d = dx < 0 ? 1 : -1;
-    if (touch.el.classList.contains("stage")) step(d);
+    if (touch.el.classList.contains("stage")) { stopViewer(); step(d); }
     else showAt(touch.el, cardOf(touch.el), (at[touch.el.dataset.card] || 0) + d);
   }
   touch = null;
@@ -621,6 +627,7 @@ function show() {
   document.getElementById("v-name").textContent = V.p.name;
   document.getElementById("v-at").textContent = imgs.length > 1 ? `${V.i + 1} / ${imgs.length}` : "";
   document.getElementById("v-prev").disabled = document.getElementById("v-next").disabled = imgs.length < 2;
+  document.getElementById("v-play").hidden = imgs.length < 2;
   V.el.classList.toggle("out", !!shot.hidden);
   document.getElementById("v-out").hidden = !shot.hidden;
   const hide = document.getElementById("v-hide");
@@ -637,7 +644,34 @@ function openViewer(id) {
   document.getElementById("v-close").focus();
 }
 const step = d => { const n = shown(V.p).length; V.i = (V.i + d + n) % n; show(); };
-const closeViewer = () => { V.el.hidden = true; document.getElementById(V.p.id)?.querySelector(".zoom")?.focus({ preventScroll: true }); };
+
+// The large view's cycle icon: resting on it plays the screenshots (clicking keeps them playing); a tap on a phone starts or stops.
+const vPlay = document.getElementById("v-play");
+vPlay.innerHTML = CYCLE_SVG;
+let show_ = null;  // { loop, kept }
+function playViewer(kept) {
+  if (show_) { show_.kept = show_.kept || kept; return; }
+  show_ = { kept, loop: setInterval(() => step(1), CYCLE_STEP) };
+  step(1);
+  vPlay.classList.add("playing"); vPlay.setAttribute("aria-pressed", "true");
+}
+function stopViewer() {
+  if (!show_) return;
+  clearInterval(show_.loop); show_ = null;
+  vPlay.classList.remove("playing"); vPlay.setAttribute("aria-pressed", "false");
+}
+if (HOVER) {
+  let rest = null;
+  vPlay.addEventListener("mouseenter", () => { rest = setTimeout(() => playViewer(false), CYCLE_START); });
+  vPlay.addEventListener("mouseleave", () => { clearTimeout(rest); if (show_ && !show_.kept) stopViewer(); });
+}
+vPlay.addEventListener("click", e => {
+  e.stopPropagation();
+  if (show_ && (show_.kept || !HOVER)) stopViewer();
+  else playViewer(true);
+});
+
+const closeViewer = () => { stopViewer(); V.el.hidden = true; document.getElementById(V.p.id)?.querySelector(".zoom")?.focus({ preventScroll: true }); };
 
 document.addEventListener("click", e => {
   if (swiped) return;
@@ -663,8 +697,8 @@ document.addEventListener("click", e => {
   }
   const open = e.target.closest("[data-open]") || e.target.closest(".shot[data-card]");
   if (open) return openViewer(open.dataset.open || open.dataset.card);
-  if (e.target.id === "v-prev") step(-1);
-  else if (e.target.id === "v-next") step(1);
+  if (e.target.id === "v-prev") { stopViewer(); step(-1); }
+  else if (e.target.id === "v-next") { stopViewer(); step(1); }
   else if (e.target.id === "v-close" || e.target.classList.contains("stage")) closeViewer();
   else if (e.target.id === "v-hide") {
     const shot = shown(V.p)[V.i];
@@ -676,8 +710,8 @@ addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.matches?.("[data-kind]")) return e.target.blur();  // Enter saves the line
   if (V.el.hidden) return;
   if (e.key === "Escape") closeViewer();
-  else if (e.key === "ArrowLeft") step(-1);
-  else if (e.key === "ArrowRight") step(1);
+  else if (e.key === "ArrowLeft") { stopViewer(); step(-1); }
+  else if (e.key === "ArrowRight") { stopViewer(); step(1); }
 });
 
 // ---- Preview: drag a card to reorder the portfolio (saved as its own order, apart from the board's) ----
