@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>studiotherefore</title>
+<meta name="description" content="Projects by studiotherefore.">
+<link rel="icon" href="favicon.ico?v=4" sizes="32x32 64x64">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=4">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=4">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=4">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* The board's look (template.html), for visitors: slides on a light table, nothing about development. */
+:root {
+  --ground: #101215; --sheet: #181b20; --sheet-2: #1f232a;
+  --ink: #e9ebef; --ink-2: #aeb5c0; --ink-3: #757d8a;
+  --rule: #2a2f37; --rule-hi: #3a414c;
+  --accent: #93a6ff; --accent-ink: #0f1220;
+  --wait: #f0b45a; --wait-wash: #382810;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--ground); color: var(--ink); font: 15px/1.5 var(--body); font-variation-settings: "wdth" 96;
+  padding-inline: clamp(16px, 4vw, 48px); padding-block: 28px 64px; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1320px; margin-inline: auto; display: grid; gap: 36px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 32px;
+  border-bottom: 2px solid var(--ink); padding-bottom: 14px; }
+.mark { display: flex; align-items: center; gap: 14px; }
+.mark .glyph { height: 0.54em; width: auto; font-size: clamp(28px, 4vw, 40px); color: var(--accent); flex: none; }
+h1 { margin: 0; font: 760 clamp(28px, 4vw, 40px)/1 var(--display); font-variation-settings: "wdth" 72;
+  letter-spacing: -0.01em; text-transform: uppercase; }
+.meta { font: 12px/1.6 var(--mono); color: var(--ink-3); text-align: right; }
+.meta b { color: var(--ink-2); font-weight: 500; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 22px; }
+.slide { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 10px;
+  display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.shot { aspect-ratio: 16 / 10; width: 100%; border-radius: 2px; overflow: hidden; background: var(--ground);
+  position: relative; display: block; border: 0; padding: 0; cursor: zoom-in; }
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: var(--ff, cover); object-position: var(--fx, 50%) var(--fy, 50%);
+  transform-origin: var(--fx, 50%) var(--fy, 50%); transform: scale(var(--fz, 1)); }
+.shot .none { position: absolute; inset: 0; display: grid; place-items: center; font: 300 52px/1 var(--display); color: var(--rule); }
+.shot .n { position: absolute; z-index: 2; right: 8px; bottom: 8px; font: 500 10.5px/1 var(--mono); padding: 4px 7px; border-radius: 3px;
+  background: rgba(10, 12, 15, .72); color: var(--ink-2); opacity: 0; transition: opacity .15s; }
+.slide:hover .shot .n, .shot:focus-visible .n { opacity: 1; }
+.body { padding: 0 6px 4px; display: grid; gap: 10px; min-width: 0; }
+h3 { margin: 0; font: 700 21px/1.15 var(--display); font-variation-settings: "wdth" 80; text-wrap: balance; }
+.kind { font: 12px/1.4 var(--mono); color: var(--ink-3); margin-top: -6px; }
+.about { margin: 0; color: var(--ink-2); font-size: 14px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.links a, .linkbtn { font: 500 12px/1 var(--mono); text-decoration: none; padding: 7px 10px; border-radius: 3px;
+  border: 1px solid var(--rule); color: var(--ink-2); background: transparent; cursor: pointer; }
+.links a.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.links a:hover, .linkbtn:hover { border-color: var(--ink-3); color: var(--ink); }
+.links a.primary:hover { color: var(--accent-ink); }
+.empty { color: var(--ink-3); font: 12px/1.6 var(--mono); }
+footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 var(--mono); color: var(--ink-3); }
+
+.slide { transition: background-color .45s ease, border-color .45s ease, box-shadow .45s ease; }
+.slide:hover { background-color: var(--sheet-2); border-color: var(--rule-hi); transition-duration: .25s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 18px 34px -14px rgba(0, 0, 0, .85), 0 3px 8px rgba(0, 0, 0, .45); }
+@media (prefers-reduced-motion: no-preference) {
+  .slide { transition: transform .45s cubic-bezier(.22, .8, .3, 1), background-color .45s ease, border-color .45s ease, box-shadow .45s ease; }
+  .slide:hover { transform: translateY(-2px); transition-duration: .26s; }
+  .shot img { transition: transform 1.4s cubic-bezier(.22, .7, .3, 1); }
+  .slide:hover .shot img { transform: scale(calc(var(--fz, 1) * 1.02)); transition-duration: 1.2s; }
+}
+
+/* screenshots, large */
+.viewer { position: fixed; inset: 0; z-index: 20; background: rgba(8, 9, 11, .94); display: grid;
+  grid-template-rows: 1fr auto; padding: clamp(12px, 3vw, 36px); gap: 12px; }
+.viewer[hidden] { display: none; }
+.viewer .stage { position: relative; min-height: 0; display: grid; place-items: center; }
+.viewer img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+.viewer .bar { display: flex; align-items: center; gap: 10px; font: 12px/1 var(--mono); color: var(--ink-3); flex-wrap: wrap; }
+.viewer .bar b { font: 700 15px/1 var(--display); font-variation-settings: "wdth" 80; color: var(--ink); margin-right: 4px; }
+.viewer .bar .sp { flex: 1; }
+.viewer button { font: 500 12px/1 var(--mono); padding: 7px 10px; border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--rule); color: var(--ink-2); background: var(--sheet); }
+.viewer button:hover { border-color: var(--ink-3); color: var(--ink); }
+.viewer button:disabled { opacity: .35; cursor: default; }
+
+/* Preview only (served by the board, never published): checks, the public About, leaving shots out. */
+.note { border: 1px dashed var(--rule-hi); border-radius: 4px; padding: 10px 12px; font: 12px/1.6 var(--mono); color: var(--ink-3); }
+.note b { color: var(--ink-2); font-weight: 500; }
+.check { font-size: 13px; color: var(--wait); }
+.about-edit { width: 100%; min-height: 110px; resize: vertical; padding: 9px 10px; border-radius: 3px;
+  border: 1px solid var(--rule); background: var(--ground); color: var(--ink-2); font: 14px/1.5 var(--body); font-variation-settings: "wdth" 96; }
+.about-edit:focus { outline: none; border-color: var(--rule-hi); }
+.own { font: 11px/1.3 var(--mono); color: var(--ink-3); }
+.head-r { display: grid; gap: 8px; justify-items: end; }
+.pub-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; font: 12px/1.3 var(--mono); }
+.pub-row[hidden] { display: none; }
+.pub-row .site { color: var(--ink-3); text-decoration: none; }
+.pub-row .site:hover { color: var(--ink-2); }
+.pub-row .busy { color: var(--accent); }
+.pub-row .busy.bad { color: var(--wait); }
+.publish { font: 500 12px/1 var(--mono); padding: 7px 11px; border-radius: 3px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+.publish:disabled { opacity: .45; cursor: default; }
+.viewer.out img { opacity: .3; }
+.viewer .left-out { color: var(--wait); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark"><svg class="glyph" viewBox="13.4 15.4 37.2 33.4" aria-hidden="true"><g fill="currentColor"><circle cx="32" cy="20" r="4.6"/><circle cx="18" cy="44.2" r="4.6"/><circle cx="46" cy="44.2" r="4.6"/></g></svg><h1>studiotherefore</h1></div>
+    <div class="head-r"><div class="meta" id="meta"></div>
+      <div class="pub-row" id="pub-row" hidden><span class="busy" id="busy"></span>
+        <a class="site" href="https://studiotherefore.github.io" target="_blank" rel="noopener">studiotherefore.github.io ↗</a>
+        <button type="button" class="publish" id="publish">Publish</button></div></div>
+  </header>
+  <div class="note" id="preview-note" hidden></div>
+  <main class="grid" id="grid"></main>
+  <footer>© <span id="year"></span> studiotherefore</footer>
+</div>
+
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="Screenshots">
+  <div class="stage"><img id="v-img" alt=""></div>
+  <div class="bar"><b id="v-name"></b><span id="v-at"></span><span class="left-out" id="v-out" hidden>left out</span><span class="sp"></span>
+    <button type="button" id="v-hide" hidden></button>
+    <button type="button" id="v-prev" aria-label="Previous">←</button><button type="button" id="v-next" aria-label="Next">→</button>
+    <button type="button" id="v-close">Close</button></div>
+</div>
+
+<script>
+const DATA = {
+ "projects": [
+  {
+   "id": "spheres",
+   "name": "Spheres",
+   "kind": "audio instrument · JUCE",
+   "about": "A macOS instrument that listens to live bass or guitar and grows a textural accompaniment around it: sustained harmonic layers, sympathetic resonance, pitch-shifted shadows of the player's own sound, echoes, captured fragments, granular clouds and ambient space. It responds both to what notes are played and to the sound itself, such as attack, noise and dynamics.\n\nIt takes Chase Bliss pedals as a reference for responsive behavior, but aims to show every relationship, give each control one meaning in musical units, and stay playable with hands on the instrument. It is built with JUCE and Faust in C++.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/d579be33125397.jpg"
+    }
+   ],
+   "frame": {
+    "x": 50.0,
+    "y": 100.0,
+    "zoom": 1.0,
+    "fit": false
+   }
+  },
+  {
+   "id": "sound-modules",
+   "name": "Sound Modules",
+   "kind": "C++ audio modules + interface mockups",
+   "about": "A library of audio modules built and judged on their own, then imported into other projects such as Spheres and Synthesis Lab. Each module models an old sound source as a physical system: Shortwave (a simulated radio band with fading stations and static), Television (an analog set's sound), Records (78s and vinyl read by a stylus) and Tape (reel-to-reel and cassette passing a head).\n\nThe modules are plain C++17 headers with no dependencies, and every claim about the sound is checked by a test.",
+   "live": "https://claude.ai/artifact/TFs3euxSM7SmjEDn6cAWhp",
+   "images": [
+    {
+     "src": "img/654ad56870cbf1.jpg"
+    }
+   ],
+   "frame": {
+    "x": 50.0,
+    "y": 50.0,
+    "zoom": 1.0,
+    "fit": true
+   }
+  },
+  {
+   "id": "synthesis-lab",
+   "name": "Synthesis Lab",
+   "kind": "web synth",
+   "about": "A browser-based sound synthesis lab built on Web Audio. It gathers many methods in one rack: subtractive, additive, wavetable, sampler, granular, physical modeling and drum synthesis, with effects, step sequencers, a piano roll, generative sequencers and a 4-track recorder.\n\nEach module has Learn text that explains its method, and it's hosted under ACTS research.",
+   "live": "https://synthlab.acts-research.workers.dev/",
+   "images": [
+    {
+     "src": "img/4263cdae720763.jpg"
+    }
+   ],
+   "frame": {
+    "x": 50.0,
+    "y": 50.0,
+    "zoom": 1.0,
+    "fit": true
+   }
+  },
+  {
+   "id": "midimap",
+   "name": "MIDImap",
+   "kind": "web instrument",
+   "about": "An instrument for live performance that plays street-level imagery, from Google Street View and Mapillary, the way you would play music. It works from the computer keyboard, and a MIDI controller can be mapped on top with MIDI learn.\n\nIt has a browser editor, a series of small experiments on recording and sequencing, and a small Electron app that sends the output to other video software as a Syphon source.",
+   "live": "https://midimap.studiotherefore.workers.dev",
+   "images": [
+    {
+     "src": "img/74a6a10952d620.jpg"
+    },
+    {
+     "src": "img/0f5103a44591ae.jpg"
+    },
+    {
+     "src": "img/4716b825b80a32.jpg"
+    },
+    {
+     "src": "img/291ff418487775.jpg"
+    },
+    {
+     "src": "img/225d40236ecbe7.jpg"
+    },
+    {
+     "src": "img/057a8870356155.jpg"
+    }
+   ]
+  },
+  {
+   "id": "passenger-app",
+   "name": "Passenger",
+   "kind": "generative voice app",
+   "about": "Passenger is a constraint-based driving app, \"OuLiPo for cars\". The driver accepts a constraint, such as \"head toward the sun\" or \"no right turns\", and drives it while a generated voice speaks rarely, in short lines, in response to what the world around the car is doing.\n\nUnderneath is the Voice Engine, a reusable generative-voice module that knows nothing about cars. It writes new lines in the owner's own register without repeating their writing.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/63c9d5ec9c218a.jpg"
+    },
+    {
+     "src": "img/390bc287fa9bdf.jpg"
+    },
+    {
+     "src": "img/c87030983fd26c.jpg"
+    },
+    {
+     "src": "img/6a004d66ae5dec.jpg"
+    },
+    {
+     "src": "img/7cf6c8f23923ed.jpg"
+    },
+    {
+     "src": "img/ba9443d80ec1b7.jpg"
+    }
+   ],
+   "frame": {
+    "x": 50.0,
+    "y": 14.3,
+    "zoom": 1.0,
+    "fit": false
+   }
+  },
+  {
+   "id": "light-table",
+   "name": "StudioWall",
+   "kind": "open-source tool (Claude Code + Codex plugin)",
+   "about": "A local board of all your projects, kept current by your coding agent. One dark page shows what is active, where each project stands, its next step, the decisions waiting on you and a recent screenshot, with resting and archived projects folded below and cards you can drag into your own order.\n\nThe agent drafts each project's entry from its own docs, refreshes a card when you wrap up a session, and runs a nightly sweep for projects whose files changed. Everything runs on your Mac, your project folders are only ever read, and it installs as a Claude Code plugin.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/df52eb3e112c26.jpg"
+    },
+    {
+     "src": "img/0177ade879eee6.jpg"
+    },
+    {
+     "src": "img/a7c51dc98a46c1.jpg"
+    },
+    {
+     "src": "img/3f0766e98e5b7d.jpg"
+    },
+    {
+     "src": "img/b8860065966340.jpg"
+    },
+    {
+     "src": "img/20fc4e9f17c8d8.jpg"
+    }
+   ]
+  },
+  {
+   "id": "agentflesh",
+   "name": "AgentFlesh",
+   "kind": "Claude Code mod (desktop Code tab skins)",
+   "about": "A skin for the conversation in the Claude desktop app's Code tab. It changes how the conversation looks, such as tool rows, edit and shell cards, prompts and the spinner, but not what Claude does or the rest of the app.\n\nSkins are made in a browser editor opened with a slash command, starting from built-in presets, and can apply to one session, one project or everywhere. It replaces a third-party skins mod.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/a25357183d39a1.jpg"
+    },
+    {
+     "src": "img/bc794c7034b945.jpg"
+    }
+   ],
+   "frame": {
+    "x": 50.0,
+    "y": 50.0,
+    "zoom": 1.0,
+    "fit": true
+   }
+  },
+  {
+   "id": "drift",
+   "name": "Drift",
+   "kind": "web artwork + Studio app",
+   "about": "An interactive artwork that moves through Google Street View, with Three.js phantom forms over the imagery, Web Audio sound zones and an authored idle cycle that turns into slow, automatic camera work. Each piece, such as Shore or Green Infiniti, is a score tied to real coordinates.\n\nIt includes Studio, a local authoring tool for placing objects, shaping sound and look, and building new pieces from scratch.",
+   "live": "https://drift.studiotherefore.workers.dev",
+   "images": [
+    {
+     "src": "img/104bbb84cf2c49.jpg"
+    },
+    {
+     "src": "img/9dee5b47fa9774.jpg"
+    },
+    {
+     "src": "img/449e70704c31df.jpg"
+    },
+    {
+     "src": "img/e0d23088988d98.jpg"
+    },
+    {
+     "src": "img/3c4a53d3ae0660.jpg"
+    },
+    {
+     "src": "img/51707c5fd963d7.jpg"
+    }
+   ]
+  },
+  {
+   "id": "misperception-engine-2",
+   "name": "Misperception Engine 2",
+   "kind": "AI image engine",
+   "about": "An instrument that points machine vision at images and deliberately misreads them. Each cell reads an image through a rule the artist writes, says what it sees, then boldly remakes the whole frame to match that reading. Cells can be chained, and one image can contaminate another through language.\n\nIt pairs a Python engine with a playable browser interface, and is meant to redeem overlooked surfaces such as cracked pavement and weedy margins.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/a031c01af9c54c.jpg"
+    },
+    {
+     "src": "img/26bf424df382d2.jpg"
+    },
+    {
+     "src": "img/562f46362575cf.jpg"
+    },
+    {
+     "src": "img/4ecdb198aa6e5a.jpg"
+    },
+    {
+     "src": "img/86bd3c9700c9d6.jpg"
+    },
+    {
+     "src": "img/66f58bb2fb3cc6.jpg"
+    }
+   ],
+   "frame": {
+    "x": 91.1,
+    "y": 0.0,
+    "zoom": 1.13,
+    "fit": false
+   }
+  },
+  {
+   "id": "austin-fire-live",
+   "name": "Austin Fire Live",
+   "kind": "public website",
+   "about": "A live map of fire activity in Austin, Texas. It shows Austin Fire Department dispatches from the city's open data, traffic incidents, city and state highway cameras, fire stations and their response areas, weather and fire-weather alerts, and the fire radio scanner with live transcription.\n\nIt runs as a single-page app on a Cloudflare Worker, viewable in 2D or 3D.",
+   "live": "https://austinfire.live",
+   "images": [
+    {
+     "src": "img/54949ed019fbc6.jpg"
+    },
+    {
+     "src": "img/28b0204df8f04d.jpg"
+    },
+    {
+     "src": "img/b3f7179ab54881.jpg"
+    },
+    {
+     "src": "img/3db10bbae93a26.jpg"
+    },
+    {
+     "src": "img/eda58a6d1aa17e.jpg"
+    },
+    {
+     "src": "img/a2fb29d2f8915e.jpg"
+    }
+   ],
+   "frame": {
+    "x": 92.1,
+    "y": 50.0,
+    "zoom": 1.0,
+    "fit": false
+   }
+  },
+  {
+   "id": "smolder-installation",
+   "name": "Smolder",
+   "kind": "installation · Tauri app",
+   "about": "Smolder is a gallery installation that uses live wildfire detection data to render a dark landscape where the fires are the only light. It treats fire as matter and atmosphere, not as a map or data visualization, and is meant to run unattended for full gallery days as a single-wall projection.\n\nIt's a Tauri desktop app with Three.js visuals and a Web Audio score that gives each of the strongest fires its own FM voice, over a drone and cathedral reverb.",
+   "live": null,
+   "images": [
+    {
+     "src": "img/42c8c77c3b3442.jpg"
+    }
+   ]
+  }
+ ],
+ "preview": false
+};
+// Editing works only in the preview, served by the board (mods/studio/server.py).
+const EDIT = DATA.preview && location.protocol === "http:" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const frameVars = f => !f ? "" : f.fit ? "--ff:contain;--fz:1" : `--fx:${f.x}%;--fy:${f.y}%;--fz:${f.zoom}`;
+const shown = p => DATA.preview && !EDIT ? p.images.filter(i => !i.hidden) : p.images;
+
+document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("meta").innerHTML = `<b>${DATA.projects.length}</b> projects`;
+
+function card(p) {
+  const imgs = shown(p), cover = imgs[0];
+  const live = p.live ? `<a class="primary" href="${esc(p.live)}" target="_blank" rel="noopener">Visit ↗</a>` : "";
+  const more = imgs.length > 1 ? `<button type="button" class="linkbtn" data-open="${esc(p.id)}">Screenshots ${imgs.length}</button>` : "";
+  const about = EDIT
+    ? `<textarea class="about-edit" data-about="${esc(p.id)}" aria-label="Public About for ${esc(p.name)}">${esc(p.about)}</textarea>
+       <div class="own">${p.own ? "Your public text. Clear it to use the board's About again." : "The board's About. Edit it here for visitors; saved when you click away."}</div>`
+    : p.about.split(/\n\s*\n/).filter(Boolean).map(t => `<p class="about">${esc(t)}</p>`).join("");
+  const checks = EDIT && p.checks.length ? `<div class="check">Check the text: it has ${p.checks.join(", ")}.</div>` : "";
+  return `<article class="slide" id="${esc(p.id)}">
+    <button type="button" class="shot" data-open="${esc(p.id)}" style="${frameVars(p.frame)}" aria-label="Screenshots of ${esc(p.name)}">${cover
+      ? `<img src="${esc(cover.src)}" alt="${esc(p.name)}" loading="lazy">${imgs.length > 1 ? `<span class="n">1 / ${imgs.length}</span>` : ""}`
+      : `<span class="none">∴</span>`}</button>
+    <div class="body">
+      <h3>${esc(p.name)}</h3>
+      ${p.kind ? `<div class="kind">${esc(p.kind)}</div>` : ""}
+      ${about}${checks}
+      ${live || more ? `<div class="links">${live}${more}</div>` : ""}
+    </div></article>`;
+}
+
+function render() {
+  document.getElementById("grid").innerHTML = DATA.projects.map(card).join("")
+    || `<p class="empty">${EDIT ? "Nothing here yet. On the board, click the globe on a card to put it on your portfolio." : "Projects coming soon."}</p>`;
+}
+render();
+
+if (EDIT) {
+  const note = document.getElementById("preview-note");
+  note.hidden = false;
+  note.innerHTML = `<b>Preview.</b> Only you see this page. Edit the text for visitors here; open the screenshots to leave any out. The board's globe icon picks which projects appear. Publish puts exactly this (without the editing) on your public site.`;
+  document.getElementById("pub-row").hidden = false;
+}
+
+// Publish: the clean site goes to studiotherefore.github.io (publish.py checks it first).
+document.getElementById("publish").addEventListener("click", async e => {
+  const btn = e.currentTarget, busy = document.getElementById("busy");
+  if (!confirm(`Publish ${DATA.projects.length} project${DATA.projects.length === 1 ? "" : "s"} to studiotherefore.github.io? Anyone can see it.`)) return;
+  btn.disabled = true; busy.className = "busy"; busy.textContent = "Publishing…";
+  try {
+    const r = await fetch("/api/publish", { method: "POST" });
+    const out = await r.json().catch(() => ({}));
+    busy.textContent = out.message || (r.ok ? "Published." : "Didn't publish.");
+    busy.classList.toggle("bad", !r.ok);
+  } catch (err) {
+    busy.textContent = "Didn't publish. Is the board server running?"; busy.classList.add("bad");
+  }
+  btn.disabled = false;
+});
+
+async function save(body) {
+  const r = await fetch("/api/portfolio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(r.status);
+}
+
+// ---- Screenshots, large: click a cover; arrows to move, Esc to close ----
+const V = { el: document.getElementById("viewer"), p: null, i: 0 };
+function show() {
+  const imgs = shown(V.p), shot = imgs[V.i];
+  document.getElementById("v-img").src = shot.src;
+  document.getElementById("v-img").alt = V.p.name;
+  document.getElementById("v-name").textContent = V.p.name;
+  document.getElementById("v-at").textContent = imgs.length > 1 ? `${V.i + 1} / ${imgs.length}` : "";
+  document.getElementById("v-prev").disabled = document.getElementById("v-next").disabled = imgs.length < 2;
+  V.el.classList.toggle("out", !!shot.hidden);
+  document.getElementById("v-out").hidden = !shot.hidden;
+  const hide = document.getElementById("v-hide");
+  hide.hidden = !EDIT || shot.cover;
+  hide.textContent = shot.hidden ? "Put back" : "Leave out";
+}
+function openViewer(id) {
+  V.p = DATA.projects.find(p => p.id === id);
+  if (!V.p || !shown(V.p).length) return;
+  V.i = 0; V.el.hidden = false; show();
+  document.getElementById("v-close").focus();
+}
+const step = d => { const n = shown(V.p).length; V.i = (V.i + d + n) % n; show(); };
+const closeViewer = () => { V.el.hidden = true; document.getElementById(V.p.id)?.querySelector(".shot")?.focus(); };
+
+document.addEventListener("click", e => {
+  const open = e.target.closest("[data-open]");
+  if (open) return openViewer(open.dataset.open);
+  if (e.target.id === "v-prev") step(-1);
+  else if (e.target.id === "v-next") step(1);
+  else if (e.target.id === "v-close" || e.target.classList.contains("stage")) closeViewer();
+  else if (e.target.id === "v-hide") {
+    const shot = shown(V.p)[V.i];
+    shot.hidden = !shot.hidden; show(); render();
+    save({ id: V.p.id, [shot.hidden ? "hide" : "show"]: shot.key }).catch(() => alert("Didn't save. Is the board server running?"));
+  }
+});
+addEventListener("keydown", e => {
+  if (V.el.hidden) return;
+  if (e.key === "Escape") closeViewer();
+  else if (e.key === "ArrowLeft") step(-1);
+  else if (e.key === "ArrowRight") step(1);
+});
+
+// The public About: saved when the box loses focus.
+document.addEventListener("focusout", e => {
+  const box = e.target.closest && e.target.closest("[data-about]");
+  if (!box) return;
+  const p = DATA.projects.find(x => x.id === box.dataset.about);
+  if (box.value.trim() === p.about.trim()) return;
+  save({ id: p.id, about: box.value }).then(() => location.reload()).catch(() => alert("Didn't save. Is the board server running?"));
+});
+</script>
+</body>
+</html>
