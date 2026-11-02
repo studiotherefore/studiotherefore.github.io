@@ -46,14 +46,38 @@ h1 { margin: 0; font: 760 clamp(28px, 4vw, 40px)/1 var(--display); font-variatio
 .slide { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 10px;
   display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .shot { aspect-ratio: 16 / 10; width: 100%; border-radius: 2px; overflow: hidden; background: var(--ground);
-  position: relative; display: block; border: 0; padding: 0; cursor: zoom-in; }
-.shot img { position: absolute; inset: 0; width: 100%; height: 100%; display: block;
-  object-fit: var(--ff, cover); object-position: var(--fx, 50%) var(--fy, 50%);
+  position: relative; display: block; cursor: zoom-in; touch-action: pan-y; }
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.shot img.layer { opacity: 0; transition: opacity .5s ease; }
+.shot img.layer.on { opacity: 1; }
+.shot img.tall { object-fit: contain; }
+/* the owner's framing, on the cover only */
+.shot img.framed { object-fit: var(--ff, cover); object-position: var(--fx, 50%) var(--fy, 50%);
   transform-origin: var(--fx, 50%) var(--fy, 50%); transform: scale(var(--fz, 1)); }
 .shot .none { position: absolute; inset: 0; display: grid; place-items: center; font: 300 52px/1 var(--display); color: var(--rule); }
-.shot .n { position: absolute; z-index: 2; right: 8px; bottom: 8px; font: 500 10.5px/1 var(--mono); padding: 4px 7px; border-radius: 3px;
-  background: rgba(10, 12, 15, .72); color: var(--ink-2); opacity: 0; transition: opacity .15s; }
-.slide:hover .shot .n, .shot:focus-visible .n { opacity: 1; }
+/* Three rollovers on the cover: previous (left), next (right), enlarge (the rest, and the corner icon). */
+.shot .nav { position: absolute; z-index: 2; top: 0; bottom: 0; width: 22%; border: 0; padding: 0 8px; margin: 0; display: flex;
+  align-items: center; background: none; color: var(--ink); cursor: pointer; opacity: 0; transition: opacity .2s ease; }
+.shot .nav.prev { left: 0; justify-content: flex-start; background: linear-gradient(to right, rgba(10, 12, 15, .5), transparent); }
+.shot .nav.next { right: 0; justify-content: flex-end; background: linear-gradient(to left, rgba(10, 12, 15, .5), transparent); }
+.shot .nav span, .shot .zoom { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(10, 12, 15, .72); color: var(--ink-2); transition: color .15s ease, background-color .15s ease; }
+.shot .nav svg, .shot .zoom svg { width: 14px; height: 14px; }
+.shot .nav:hover span, .shot .zoom:hover { color: var(--ink); background: rgba(10, 12, 15, .9); }
+.shot .zoom { position: absolute; z-index: 3; top: 6px; right: 6px; border: 0; padding: 0; border-radius: 3px; width: 26px; height: 26px;
+  cursor: zoom-in; opacity: 0; transition: opacity .2s ease; }
+.shot .pips { position: absolute; z-index: 2; left: 50%; bottom: 8px; transform: translateX(-50%); display: flex; gap: 5px; padding: 5px 7px;
+  border-radius: 99px; background: rgba(10, 12, 15, .6); opacity: 0; transition: opacity .25s ease; pointer-events: none; }
+.shot .pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-3); transition: background-color .2s ease; }
+.shot .pips i.at { background: var(--ink); }
+.shot:hover .nav, .shot:hover .pips, .shot .nav:focus-visible, .shot:focus-within .pips { opacity: 1; }
+.shot:hover .zoom, .shot .zoom:focus-visible { opacity: .85; }
+/* Phones and tablets have no hover: the arrows, dots and enlarge icon stay shown (and a swipe moves too). */
+@media (hover: none) {
+  .shot .nav, .shot .pips { opacity: 1; }
+  .shot .zoom { opacity: .85; }
+  .shot .nav { width: 18%; background: none; }
+}
 .body { padding: 0 6px 4px; display: grid; gap: 10px; min-width: 0; }
 h3 { margin: 0; font: 700 21px/1.15 var(--display); font-variation-settings: "wdth" 80; text-wrap: balance; }
 .kind { font: 12px/1.4 var(--mono); color: var(--ink-3); margin-top: -6px; }
@@ -73,15 +97,16 @@ footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 va
 @media (prefers-reduced-motion: no-preference) {
   .slide { transition: transform .45s cubic-bezier(.22, .8, .3, 1), background-color .45s ease, border-color .45s ease, box-shadow .45s ease; }
   .slide:hover { transform: translateY(-2px); transition-duration: .26s; }
-  .shot img { transition: transform 1.4s cubic-bezier(.22, .7, .3, 1); }
-  .slide:hover .shot img { transform: scale(calc(var(--fz, 1) * 1.02)); transition-duration: 1.2s; }
+  .shot img.layer { transition: opacity .5s ease, transform 1.4s cubic-bezier(.22, .7, .3, 1); }
+  .slide:hover .shot img.layer { transform: scale(1.02); transition: opacity .5s ease, transform 1.2s cubic-bezier(.22, .7, .3, 1); }
+  .slide:hover .shot img.layer.framed { transform: scale(calc(var(--fz, 1) * 1.02)); }
 }
 
 /* screenshots, large */
 .viewer { position: fixed; inset: 0; z-index: 20; background: rgba(8, 9, 11, .94); display: grid;
   grid-template-rows: 1fr auto; padding: clamp(12px, 3vw, 36px); gap: 12px; }
 .viewer[hidden] { display: none; }
-.viewer .stage { position: relative; min-height: 0; display: grid; place-items: center; }
+.viewer .stage { position: relative; min-height: 0; display: grid; place-items: center; touch-action: pan-y; }
 .viewer img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
 .viewer .bar { display: flex; align-items: center; gap: 10px; font: 12px/1 var(--mono); color: var(--ink-3); flex-wrap: wrap; }
 .viewer .bar b { font: 700 15px/1 var(--display); font-variation-settings: "wdth" 80; color: var(--ink); margin-right: 4px; }
@@ -97,8 +122,21 @@ footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 va
 .check { font-size: 13px; color: var(--wait); }
 .about-edit { width: 100%; min-height: 110px; resize: vertical; padding: 9px 10px; border-radius: 3px;
   border: 1px solid var(--rule); background: var(--ground); color: var(--ink-2); font: 14px/1.5 var(--body); font-variation-settings: "wdth" 96; }
-.about-edit:focus { outline: none; border-color: var(--rule-hi); }
+.about-edit:focus, .kind-edit:focus { outline: none; border-color: var(--rule-hi); }
+.kind-edit { width: 100%; margin-top: -6px; padding: 5px 8px; border-radius: 3px; border: 1px solid var(--rule);
+  background: var(--ground); color: var(--ink-3); font: 12px/1.4 var(--mono); }
+.kind-edit:focus { color: var(--ink-2); }
 .own { font: 11px/1.3 var(--mono); color: var(--ink-3); }
+.links { align-items: center; }
+.links a.off { opacity: .45; }
+.slide[draggable="true"] { cursor: grab; }
+.slide.dragging { opacity: .35; }
+.slide.drop-before { box-shadow: -5px 0 0 -1px var(--accent); }
+.slide.drop-after { box-shadow: 5px 0 0 -1px var(--accent); }
+.pub { background: none; border: 0; padding: 4px; margin: 0; cursor: pointer; color: var(--ink-3); line-height: 0; }
+.pub:hover { color: var(--ink); }
+.pub.on { color: var(--accent); }
+.pub svg { width: 15px; height: 15px; }
 .head-r { display: grid; gap: 8px; justify-items: end; }
 .pub-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; font: 12px/1.3 var(--mono); }
 .pub-row[hidden] { display: none; }
@@ -141,8 +179,8 @@ const DATA = {
   {
    "id": "spheres",
    "name": "Spheres",
-   "kind": "audio instrument · JUCE",
-   "about": "A macOS instrument that listens to live bass or guitar and grows a textural accompaniment around it: sustained harmonic layers, sympathetic resonance, pitch-shifted shadows of the player's own sound, echoes, captured fragments, granular clouds and ambient space. It responds both to what notes are played and to the sound itself, such as attack, noise and dynamics.\n\nIt takes Chase Bliss pedals as a reference for responsive behavior, but aims to show every relationship, give each control one meaning in musical units, and stay playable with hands on the instrument. It is built with JUCE and Faust in C++.",
+   "kind": "an ambient audio instrument that blurs the world",
+   "about": "A macOS instrument that listens to live bass or guitar and grows a textural accompaniment around it: sustained harmonic layers, sympathetic resonance, pitch-shifted shadows of the player's own sound, echoes, captured fragments, granular clouds and ambient space. It responds both to what notes are played and to the sound itself, such as attack, noise and dynamics.",
    "live": null,
    "images": [
     {
@@ -157,14 +195,14 @@ const DATA = {
    }
   },
   {
-   "id": "sound-modules",
-   "name": "Sound Modules",
-   "kind": "C++ audio modules + interface mockups",
-   "about": "A library of audio modules built and judged on their own, then imported into other projects such as Spheres and Synthesis Lab. Each module models an old sound source as a physical system: Shortwave (a simulated radio band with fading stations and static), Television (an analog set's sound), Records (78s and vinyl read by a stylus) and Tape (reel-to-reel and cassette passing a head).\n\nThe modules are plain C++17 headers with no dependencies, and every claim about the sound is checked by a test.",
-   "live": "https://claude.ai/artifact/TFs3euxSM7SmjEDn6cAWhp",
+   "id": "synthesis-lab",
+   "name": "Synthesis Lab",
+   "kind": "browser based synthesizer laboratory",
+   "about": "A browser-based sound synthesis lab. It gathers many methods in one rack: subtractive, additive, wavetable, sampler, granular, physical modeling and drum synthesis, with effects, step sequencers, a piano roll, generative sequencers and a 4-track recorder.\n\nEach module has Learn text that explains its method, and it's hosted under ACTS research.",
+   "live": "https://synthlab.acts-research.workers.dev/",
    "images": [
     {
-     "src": "img/654ad56870cbf1.jpg"
+     "src": "img/4263cdae720763.jpg"
     }
    ],
    "frame": {
@@ -175,14 +213,14 @@ const DATA = {
    }
   },
   {
-   "id": "synthesis-lab",
-   "name": "Synthesis Lab",
-   "kind": "web synth",
-   "about": "A browser-based sound synthesis lab built on Web Audio. It gathers many methods in one rack: subtractive, additive, wavetable, sampler, granular, physical modeling and drum synthesis, with effects, step sequencers, a piano roll, generative sequencers and a 4-track recorder.\n\nEach module has Learn text that explains its method, and it's hosted under ACTS research.",
-   "live": "https://synthlab.acts-research.workers.dev/",
+   "id": "sound-modules",
+   "name": "Sound Modules",
+   "kind": "noise modules",
+   "about": "A library of audio modules to use standalone or projects such as Spheres and Synthesis Lab. Each module models a vintage sound source as a physical system: Shortwave, Television, Vinyl (78s and vinyl read by a stylus) and Tape.",
+   "live": "https://claude.ai/artifact/TFs3euxSM7SmjEDn6cAWhp",
    "images": [
     {
-     "src": "img/4263cdae720763.jpg"
+     "src": "img/654ad56870cbf1.jpg"
     }
    ],
    "frame": {
@@ -223,14 +261,15 @@ const DATA = {
    "id": "passenger-app",
    "name": "Passenger",
    "kind": "generative voice app",
-   "about": "Passenger is a constraint-based driving app, \"OuLiPo for cars\". The driver accepts a constraint, such as \"head toward the sun\" or \"no right turns\", and drives it while a generated voice speaks rarely, in short lines, in response to what the world around the car is doing.\n\nUnderneath is the Voice Engine, a reusable generative-voice module that knows nothing about cars. It writes new lines in the owner's own register without repeating their writing.",
+   "about": "Passenger is a constraint-based driving app, The driver accepts a constraint, such as \"head toward the sun\" or \"no right turns\", and drives it while a generated voice speaks rarely, in short lines, in response to what the world around the car is doing.\n\nUnderneath is the Voice Engine, a reusable generative-voice module that knows nothing about cars. It writes new lines in the owner's own register without repeating their writing.",
    "live": null,
    "images": [
     {
      "src": "img/63c9d5ec9c218a.jpg"
     },
     {
-     "src": "img/390bc287fa9bdf.jpg"
+     "src": "img/390bc287fa9bdf.jpg",
+     "tall": true
     },
     {
      "src": "img/c87030983fd26c.jpg"
@@ -239,7 +278,8 @@ const DATA = {
      "src": "img/6a004d66ae5dec.jpg"
     },
     {
-     "src": "img/7cf6c8f23923ed.jpg"
+     "src": "img/7cf6c8f23923ed.jpg",
+     "tall": true
     },
     {
      "src": "img/ba9443d80ec1b7.jpg"
@@ -290,7 +330,8 @@ const DATA = {
      "src": "img/a25357183d39a1.jpg"
     },
     {
-     "src": "img/bc794c7034b945.jpg"
+     "src": "img/bc794c7034b945.jpg",
+     "tall": true
     }
    ],
    "frame": {
@@ -305,7 +346,7 @@ const DATA = {
    "name": "Drift",
    "kind": "web artwork + Studio app",
    "about": "An interactive artwork that moves through Google Street View, with Three.js phantom forms over the imagery, Web Audio sound zones and an authored idle cycle that turns into slow, automatic camera work. Each piece, such as Shore or Green Infiniti, is a score tied to real coordinates.\n\nIt includes Studio, a local authoring tool for placing objects, shaping sound and look, and building new pieces from scratch.",
-   "live": "https://drift.studiotherefore.workers.dev",
+   "live": null,
    "images": [
     {
      "src": "img/104bbb84cf2c49.jpg"
@@ -317,7 +358,8 @@ const DATA = {
      "src": "img/449e70704c31df.jpg"
     },
     {
-     "src": "img/e0d23088988d98.jpg"
+     "src": "img/e0d23088988d98.jpg",
+     "tall": true
     },
     {
      "src": "img/3c4a53d3ae0660.jpg"
@@ -338,7 +380,8 @@ const DATA = {
      "src": "img/a031c01af9c54c.jpg"
     },
     {
-     "src": "img/26bf424df382d2.jpg"
+     "src": "img/26bf424df382d2.jpg",
+     "tall": true
     },
     {
      "src": "img/562f46362575cf.jpg"
@@ -383,7 +426,8 @@ const DATA = {
      "src": "img/eda58a6d1aa17e.jpg"
     },
     {
-     "src": "img/a2fb29d2f8915e.jpg"
+     "src": "img/a2fb29d2f8915e.jpg",
+     "tall": true
     }
    ],
    "frame": {
@@ -412,36 +456,71 @@ const DATA = {
 const EDIT = DATA.preview && location.protocol === "http:" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const frameVars = f => !f ? "" : f.fit ? "--ff:contain;--fz:1" : `--fx:${f.x}%;--fy:${f.y}%;--fz:${f.zoom}`;
-const shown = p => DATA.preview && !EDIT ? p.images.filter(i => !i.hidden) : p.images;
+// The cover shows only what will be published; the large view in the preview shows all, so a left-out shot can be put back.
+const onCard = p => p.images.filter(i => !i.hidden);
+const shown = p => EDIT ? p.images : onCard(p);
+const HOVER = matchMedia("(hover: hover)").matches;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ARROW = d => `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${d < 0 ? "M10 3.5 5.5 8l4.5 4.5" : "M6 3.5 10.5 8 6 12.5"}"/></svg>`;
+// The globe (as on the board): whether the live site is linked on the portfolio. Preview only.
+const GLOBE_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="6.25"/><ellipse cx="8" cy="8" rx="2.6" ry="6.25"/><path d="M1.9 6h12.2M1.9 10h12.2"/></svg>`;
+const ZOOM_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9"/></svg>`;
 
 document.getElementById("year").textContent = new Date().getFullYear();
 document.getElementById("meta").innerHTML = `<b>${DATA.projects.length}</b> projects`;
 
 function card(p) {
-  const imgs = shown(p), cover = imgs[0];
-  const live = p.live ? `<a class="primary" href="${esc(p.live)}" target="_blank" rel="noopener">Visit ↗</a>` : "";
-  const more = imgs.length > 1 ? `<button type="button" class="linkbtn" data-open="${esc(p.id)}">Screenshots ${imgs.length}</button>` : "";
+  const imgs = onCard(p), cover = imgs[0], many = imgs.length > 1;
+  const live = !p.live ? "" : !EDIT ? `<a class="primary" href="${esc(p.live)}" target="_blank" rel="noopener">Visit ↗</a>`
+    : `<a class="${p.link ? "primary" : "off"}" href="${esc(p.live)}" target="_blank" rel="noopener">Visit ↗</a>
+       <button type="button" class="pub${p.link ? " on" : ""}" data-link="${esc(p.id)}" aria-pressed="${!!p.link}" title="${p.link ? "The live site is linked on your portfolio. Click to leave the link off." : "The live site isn't linked on your portfolio. Click to link it."}">${GLOBE_SVG}</button>
+       <span class="own">${p.link ? "" : "not linked"}</span>`;
   const about = EDIT
     ? `<textarea class="about-edit" data-about="${esc(p.id)}" aria-label="Public About for ${esc(p.name)}">${esc(p.about)}</textarea>
        <div class="own">${p.own ? "Your public text. Clear it to use the board's About again." : "The board's About. Edit it here for visitors; saved when you click away."}</div>`
     : p.about.split(/\n\s*\n/).filter(Boolean).map(t => `<p class="about">${esc(t)}</p>`).join("");
   const checks = EDIT && p.checks.length ? `<div class="check">Check the text: it has ${p.checks.join(", ")}.</div>` : "";
-  return `<article class="slide" id="${esc(p.id)}">
-    <button type="button" class="shot" data-open="${esc(p.id)}" style="${frameVars(p.frame)}" aria-label="Screenshots of ${esc(p.name)}">${cover
-      ? `<img src="${esc(cover.src)}" alt="${esc(p.name)}" loading="lazy">${imgs.length > 1 ? `<span class="n">1 / ${imgs.length}</span>` : ""}`
-      : `<span class="none">∴</span>`}</button>
+  return `<article class="slide" id="${esc(p.id)}"${EDIT ? ` draggable="true"` : ""}>
+    <div class="shot" data-card="${esc(p.id)}" style="${frameVars(p.frame)}">${cover
+      ? `<img class="layer on framed${cover.tall ? " tall" : ""}" src="${esc(cover.src)}" alt="${esc(p.name)}" loading="lazy" draggable="false"><img class="layer" alt="" draggable="false">
+         ${many ? `<button type="button" class="nav prev" data-step="-1" aria-label="Previous screenshot"><span>${ARROW(-1)}</span></button>
+         <button type="button" class="nav next" data-step="1" aria-label="Next screenshot"><span>${ARROW(1)}</span></button>
+         <span class="pips" aria-hidden="true">${imgs.map((_, i) => `<i${i ? "" : ` class="at"`}></i>`).join("")}</span>` : ""}
+         <button type="button" class="zoom" data-open="${esc(p.id)}" aria-label="Enlarge the screenshots of ${esc(p.name)}">${ZOOM_SVG}</button>`
+      : `<span class="none">∴</span>`}</div>
     <div class="body">
       <h3>${esc(p.name)}</h3>
-      ${p.kind ? `<div class="kind">${esc(p.kind)}</div>` : ""}
+      ${EDIT ? `<input class="kind-edit" data-kind="${esc(p.id)}" value="${esc(p.kind)}" placeholder="One line: what it is" aria-label="Public one-line description of ${esc(p.name)}" title="${p.ownKind ? "Your public line. Clear it to use the board's again." : "The board's line. Edit it here for visitors."}">`
+        : p.kind ? `<div class="kind">${esc(p.kind)}</div>` : ""}
       ${about}${checks}
-      ${live || more ? `<div class="links">${live}${more}</div>` : ""}
+      ${live ? `<div class="links">${live}</div>` : ""}
     </div></article>`;
 }
 
 function render() {
+  at = {};
   document.getElementById("grid").innerHTML = DATA.projects.map(card).join("")
     || `<p class="empty">${EDIT ? "Nothing here yet. On the board, click the globe on a card to put it on your portfolio." : "Projects coming soon."}</p>`;
 }
+
+// ---- The cover: arrows (or a swipe) step through the screenshots; resting the pointer on it plays them ----
+let at = {};  // card id -> the screenshot showing
+function showAt(shot, p, i) {
+  const imgs = onCard(p), n = imgs.length;
+  i = (i + n) % n; at[p.id] = i;
+  const layers = [...shot.querySelectorAll("img.layer")];
+  const front = layers.find(l => l.classList.contains("on")), back = layers.find(l => l !== front);
+  const swap = () => {
+    back.classList.toggle("tall", !!imgs[i].tall);
+    back.classList.toggle("framed", i === 0);
+    back.style.transition = front.style.transition = REDUCED ? "none" : "";
+    back.classList.add("on"); front.classList.remove("on");
+  };
+  if (back.getAttribute("src") === imgs[i].src && back.complete) swap();
+  else { back.onload = swap; back.src = imgs[i].src; }
+  shot.querySelectorAll(".pips i").forEach((pip, k) => pip.classList.toggle("at", k === i));
+}
+const cardOf = shot => DATA.projects.find(p => p.id === shot.dataset.card);
 render();
 
 if (EDIT) {
@@ -472,7 +551,51 @@ async function save(body) {
   if (!r.ok) throw new Error(r.status);
 }
 
-// ---- Screenshots, large: click a cover; arrows to move, Esc to close ----
+const CYCLE_START = 400, CYCLE_STEP = 2100;
+let cyc = null;  // { shot, p, timer, loop, manual }
+function stopCycle(back) {
+  if (!cyc) return;
+  clearTimeout(cyc.timer); clearInterval(cyc.loop);
+  if (back && !cyc.manual && at[cyc.p.id]) showAt(cyc.shot, cyc.p, 0);
+  cyc = null;
+}
+if (HOVER) {
+  document.addEventListener("mouseover", e => {
+    const shot = e.target.closest && e.target.closest(".shot[data-card]");
+    if (!shot || (cyc && cyc.shot === shot)) return;
+    stopCycle(true);
+    const p = cardOf(shot);
+    if (onCard(p).length < 2) return;
+    cyc = { shot, p };
+    cyc.timer = setTimeout(() => {
+      showAt(shot, p, (at[p.id] || 0) + 1);
+      cyc.loop = setInterval(() => showAt(shot, p, at[p.id] + 1), CYCLE_STEP);
+    }, CYCLE_START);
+  });
+  document.addEventListener("mouseout", e => {
+    if (cyc && !cyc.shot.contains(e.relatedTarget)) stopCycle(true);
+  });
+}
+
+// A swipe on the cover or the large view steps; the tap that ends a swipe doesn't also enlarge.
+let touch = null, swiped = false;
+document.addEventListener("touchstart", e => {
+  const el = e.target.closest && e.target.closest(".shot[data-card], .viewer .stage");
+  touch = el && e.touches.length === 1 ? { el, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+}, { passive: true });
+document.addEventListener("touchend", e => {
+  if (!touch) return;
+  const t = e.changedTouches[0], dx = t.clientX - touch.x, dy = t.clientY - touch.y;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    swiped = true; setTimeout(() => { swiped = false; }, 400);
+    const d = dx < 0 ? 1 : -1;
+    if (touch.el.classList.contains("stage")) step(d);
+    else showAt(touch.el, cardOf(touch.el), (at[touch.el.dataset.card] || 0) + d);
+  }
+  touch = null;
+}, { passive: true });
+
+// ---- Screenshots, large: the enlarge icon or a click on the cover; arrows or a swipe to move, Esc to close ----
 const V = { el: document.getElementById("viewer"), p: null, i: 0 };
 function show() {
   const imgs = shown(V.p), shot = imgs[V.i];
@@ -490,15 +613,31 @@ function show() {
 function openViewer(id) {
   V.p = DATA.projects.find(p => p.id === id);
   if (!V.p || !shown(V.p).length) return;
-  V.i = 0; V.el.hidden = false; show();
+  stopCycle(false);
+  const current = onCard(V.p)[at[id] || 0];
+  V.i = Math.max(0, shown(V.p).indexOf(current));  // open on the screenshot the cover is showing
+  V.el.hidden = false; show();
   document.getElementById("v-close").focus();
 }
 const step = d => { const n = shown(V.p).length; V.i = (V.i + d + n) % n; show(); };
-const closeViewer = () => { V.el.hidden = true; document.getElementById(V.p.id)?.querySelector(".shot")?.focus(); };
+const closeViewer = () => { V.el.hidden = true; document.getElementById(V.p.id)?.querySelector(".zoom")?.focus({ preventScroll: true }); };
 
 document.addEventListener("click", e => {
-  const open = e.target.closest("[data-open]");
-  if (open) return openViewer(open.dataset.open);
+  if (swiped) return;
+  const link = EDIT && e.target.closest("[data-link]");
+  if (link) {
+    const p = DATA.projects.find(x => x.id === link.dataset.link);
+    p.link = !p.link; render();
+    return save({ id: p.id, link: p.link }).catch(() => alert("Didn't save. Is the board server running?"));
+  }
+  const nav = e.target.closest("[data-step]");
+  if (nav) {
+    const shot = nav.closest(".shot"), p = cardOf(shot);
+    if (cyc && cyc.shot === shot) { clearTimeout(cyc.timer); clearInterval(cyc.loop); cyc.manual = true; }  // you're steering now
+    return showAt(shot, p, (at[p.id] || 0) + +nav.dataset.step);
+  }
+  const open = e.target.closest("[data-open]") || e.target.closest(".shot[data-card]");
+  if (open) return openViewer(open.dataset.open || open.dataset.card);
   if (e.target.id === "v-prev") step(-1);
   else if (e.target.id === "v-next") step(1);
   else if (e.target.id === "v-close" || e.target.classList.contains("stage")) closeViewer();
@@ -509,14 +648,60 @@ document.addEventListener("click", e => {
   }
 });
 addEventListener("keydown", e => {
+  if (e.key === "Enter" && e.target.matches?.("[data-kind]")) return e.target.blur();  // Enter saves the line
   if (V.el.hidden) return;
   if (e.key === "Escape") closeViewer();
   else if (e.key === "ArrowLeft") step(-1);
   else if (e.key === "ArrowRight") step(1);
 });
 
+// ---- Preview: drag a card to reorder the portfolio (saved as its own order, apart from the board's) ----
+if (EDIT) {
+  let dragId = null, target = null;
+  const clear = () => document.querySelectorAll(".drop-before, .drop-after").forEach(el => el.classList.remove("drop-before", "drop-after"));
+  // Not while typing in a card's text boxes, so selecting text doesn't pick the card up.
+  document.addEventListener("focusin", e => { const c = e.target.closest?.("[data-about], [data-kind]")?.closest(".slide"); if (c) c.draggable = false; });
+  document.addEventListener("focusout", e => { const c = e.target.closest?.("[data-about], [data-kind]")?.closest(".slide"); if (c) c.draggable = true; });
+  document.addEventListener("dragstart", e => {
+    const c = e.target.closest && e.target.closest(".slide[draggable=true]");
+    if (!c) return;
+    stopCycle(true);
+    dragId = c.id; c.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId);
+  });
+  document.addEventListener("dragover", e => {
+    if (!dragId) return;
+    const c = e.target.closest(".slide");
+    clear();
+    if (!c || c.id === dragId) { target = null; return; }
+    e.preventDefault();
+    const r = c.getBoundingClientRect(), after = e.clientX > r.left + r.width / 2;
+    c.classList.add(after ? "drop-after" : "drop-before");
+    target = { id: c.id, after };
+  });
+  document.addEventListener("drop", e => { if (dragId && target) e.preventDefault(); });
+  document.addEventListener("dragend", () => {
+    document.querySelectorAll(".dragging").forEach(el => el.classList.remove("dragging"));
+    clear();
+    if (dragId && target) {
+      const list = DATA.projects, moved = list.splice(list.findIndex(p => p.id === dragId), 1)[0];
+      list.splice(list.findIndex(p => p.id === target.id) + (target.after ? 1 : 0), 0, moved);
+      render();
+      save({ order: list.map(p => p.id) }).catch(() => alert("Didn't save. Is the board server running?"));
+    }
+    dragId = target = null;
+  });
+}
+
 // The public About: saved when the box loses focus.
 document.addEventListener("focusout", e => {
+  const line = e.target.closest && e.target.closest("[data-kind]");
+  if (line) {
+    const p = DATA.projects.find(x => x.id === line.dataset.kind);
+    if (line.value.trim() !== p.kind.trim())
+      save({ id: p.id, kind: line.value }).then(() => location.reload()).catch(() => alert("Didn't save. Is the board server running?"));
+    return;
+  }
   const box = e.target.closest && e.target.closest("[data-about]");
   if (!box) return;
   const p = DATA.projects.find(x => x.id === box.dataset.about);
