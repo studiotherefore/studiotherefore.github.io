@@ -80,6 +80,14 @@ h1 { margin: 0; font: 760 clamp(28px, 4vw, 40px)/1 var(--display); font-variatio
 }
 .body { padding: 0 6px 4px; display: grid; gap: 10px; min-width: 0; }
 h3 { margin: 0; font: 700 21px/1.15 var(--display); font-variation-settings: "wdth" 80; text-wrap: balance; }
+.title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+/* the board's cycle icon: rest on it to play the screenshots (tap on a phone) */
+.cycle { background: none; border: 0; padding: 2px 3px; margin: 0; cursor: default; color: var(--ink-3); flex: none;
+  opacity: 0; transition: opacity .25s ease, color .2s ease; line-height: 0; align-self: center; }
+.slide:hover .cycle, .cycle:focus-visible { opacity: .7; }
+.slide .cycle:hover, .slide .cycle.playing { opacity: 1; color: var(--accent); }
+.cycle svg { width: 15px; height: 15px; }
+@media (hover: none) { .cycle { opacity: .7; cursor: pointer; } }
 .kind { font: 12px/1.4 var(--mono); color: var(--ink-3); margin-top: -6px; }
 .about { margin: 0; color: var(--ink-2); font-size: 14px; }
 .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
@@ -106,8 +114,9 @@ footer { border-top: 1px solid var(--rule); padding-top: 14px; font: 12px/1.6 va
 .viewer { position: fixed; inset: 0; z-index: 20; background: rgba(8, 9, 11, .94); display: grid;
   grid-template-rows: 1fr auto; padding: clamp(12px, 3vw, 36px); gap: 12px; }
 .viewer[hidden] { display: none; }
-.viewer .stage { position: relative; min-height: 0; display: grid; place-items: center; touch-action: pan-y; }
-.viewer img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 2px; box-shadow: 0 20px 60px rgba(0, 0, 0, .6); }
+.viewer .stage { position: relative; min-height: 0; touch-action: pan-y; }
+/* fills the space above the bar and fits the whole screenshot in it */
+.viewer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0, 0, 0, .55)); }
 .viewer .bar { display: flex; align-items: center; gap: 10px; font: 12px/1 var(--mono); color: var(--ink-3); flex-wrap: wrap; }
 .viewer .bar b { font: 700 15px/1 var(--display); font-variation-settings: "wdth" 80; color: var(--ink); margin-right: 4px; }
 .viewer .bar .sp { flex: 1; }
@@ -464,6 +473,7 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const ARROW = d => `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="${d < 0 ? "M10 3.5 5.5 8l4.5 4.5" : "M6 3.5 10.5 8 6 12.5"}"/></svg>`;
 // The globe (as on the board): whether the live site is linked on the portfolio. Preview only.
 const GLOBE_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="8" r="6.25"/><ellipse cx="8" cy="8" rx="2.6" ry="6.25"/><path d="M1.9 6h12.2M1.9 10h12.2"/></svg>`;
+const CYCLE_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="2.5" width="9" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="5.5" width="9" height="7" rx="1" fill="var(--sheet)" stroke="currentColor" stroke-width="1.2"/></svg>`;
 const ZOOM_SVG = `<svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9"/></svg>`;
 
 document.getElementById("year").textContent = new Date().getFullYear();
@@ -489,7 +499,7 @@ function card(p) {
          <button type="button" class="zoom" data-open="${esc(p.id)}" aria-label="Enlarge the screenshots of ${esc(p.name)}">${ZOOM_SVG}</button>`
       : `<span class="none">∴</span>`}</div>
     <div class="body">
-      <h3>${esc(p.name)}</h3>
+      <div class="title"><h3>${esc(p.name)}</h3>${many ? `<button type="button" class="cycle" data-cycle="${esc(p.id)}" aria-label="Play the screenshots of ${esc(p.name)}" title="Rest here to flip through the screenshots">${CYCLE_SVG}</button>` : ""}</div>
       ${EDIT ? `<input class="kind-edit" data-kind="${esc(p.id)}" value="${esc(p.kind)}" placeholder="One line: what it is" aria-label="Public one-line description of ${esc(p.name)}" title="${p.ownKind ? "Your public line. Clear it to use the board's again." : "The board's line. Edit it here for visitors."}">`
         : p.kind ? `<div class="kind">${esc(p.kind)}</div>` : ""}
       ${about}${checks}
@@ -552,28 +562,35 @@ async function save(body) {
 }
 
 const CYCLE_START = 400, CYCLE_STEP = 2100;
-let cyc = null;  // { shot, p, timer, loop, manual }
+let cyc = null;  // { from (the cover or the cycle icon), shot, p, timer, loop, manual }
+function startCycle(from, shot) {
+  const p = cardOf(shot);
+  if (onCard(p).length < 2) return;
+  cyc = { from, shot, p };
+  shot.closest(".slide").querySelector(".cycle")?.classList.add("playing");
+  cyc.timer = setTimeout(() => {
+    showAt(shot, p, (at[p.id] || 0) + 1);
+    cyc.loop = setInterval(() => showAt(shot, p, at[p.id] + 1), CYCLE_STEP);
+  }, from.classList.contains("cycle") && !HOVER ? 0 : CYCLE_START);
+}
 function stopCycle(back) {
   if (!cyc) return;
   clearTimeout(cyc.timer); clearInterval(cyc.loop);
+  cyc.shot.closest(".slide").querySelector(".cycle")?.classList.remove("playing");
   if (back && !cyc.manual && at[cyc.p.id]) showAt(cyc.shot, cyc.p, 0);
   cyc = null;
 }
+const shotFor = el => el.closest(".slide").querySelector(".shot[data-card]");
 if (HOVER) {
+  // Resting on the cover, or on the cycle icon beside the name, plays the screenshots; leaving goes back to the cover.
   document.addEventListener("mouseover", e => {
-    const shot = e.target.closest && e.target.closest(".shot[data-card]");
-    if (!shot || (cyc && cyc.shot === shot)) return;
+    const from = e.target.closest && (e.target.closest("[data-cycle]") || e.target.closest(".shot[data-card]"));
+    if (!from || (cyc && cyc.from === from)) return;
     stopCycle(true);
-    const p = cardOf(shot);
-    if (onCard(p).length < 2) return;
-    cyc = { shot, p };
-    cyc.timer = setTimeout(() => {
-      showAt(shot, p, (at[p.id] || 0) + 1);
-      cyc.loop = setInterval(() => showAt(shot, p, at[p.id] + 1), CYCLE_STEP);
-    }, CYCLE_START);
+    startCycle(from, from.matches("[data-cycle]") ? shotFor(from) : from);
   });
   document.addEventListener("mouseout", e => {
-    if (cyc && !cyc.shot.contains(e.relatedTarget)) stopCycle(true);
+    if (cyc && !cyc.from.contains(e.relatedTarget)) stopCycle(true);
   });
 }
 
@@ -629,6 +646,14 @@ document.addEventListener("click", e => {
     const p = DATA.projects.find(x => x.id === link.dataset.link);
     p.link = !p.link; render();
     return save({ id: p.id, link: p.link }).catch(() => alert("Didn't save. Is the board server running?"));
+  }
+  const icon = e.target.closest("[data-cycle]");
+  if (icon) {
+    if (HOVER) return;
+    const playing = cyc && cyc.from === icon;
+    stopCycle(!playing);
+    if (!playing) startCycle(icon, shotFor(icon));
+    return;
   }
   const nav = e.target.closest("[data-step]");
   if (nav) {
